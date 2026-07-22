@@ -1,0 +1,195 @@
+# =============================================================================
+# OID - OpenVPN Isolated Docker
+# Docker Compose: Multi-client VPN configuration
+# =============================================================================
+#
+# Usage:
+#   1. Place your .ovpn files in the ./configs/ directory
+#   2. Copy .env.example to .env and fill in your credentials
+#   3. Run: docker compose up -d
+#
+# Each service runs an isolated OpenVPN connection with its own SOCKS5 proxy.
+# Applications can route traffic through a specific VPN by connecting to
+# the corresponding SOCKS5 port on localhost.
+# =============================================================================
+
+# =============================================================================
+# VPN Client 1 - Primary connection
+# =============================================================================
+# Routes traffic through Host port 1080 → Container SOCKS5 → VPN tunnel
+#
+# Usage with curl:
+#   curl --socks5-hostname localhost:1080 https://ifconfig.me
+#
+# Usage with applications:
+#   Set SOCKS5 proxy to: socks5h://localhost:1080
+# =============================================================================
+services:
+  oid-client-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oid-client-1
+    restart: unless-stopped
+
+    # -- Networking -----------------------------------------------------------
+    # Port mapping: host:container
+    # Only the SOCKS5 port is exposed; VPN traffic stays isolated
+    ports:
+      - "1080:1080"
+
+    # -- Capabilities ---------------------------------------------------------
+    # NET_ADMIN: Required for OpenVPN to create tun interface and modify routes
+    cap_add:
+      - NET_ADMIN
+
+    # -- Devices --------------------------------------------------------------
+    # /dev/net/tun: Required for VPN tunnel interface
+    devices:
+      - /dev/net/tun
+
+    # -- Volumes --------------------------------------------------------------
+    # Mount your .ovpn config file (read-only for security)
+    volumes:
+      - ./configs/client1.ovpn:/etc/openvpn/client.ovpn:ro
+
+    # -- Environment ----------------------------------------------------------
+    # Credentials are passed via env vars (never baked into the image)
+    # Leave OPENVPN_USER and OPENVPN_PASS empty for certificate-based auth
+    environment:
+      - OPENVPN_USER=${CLIENT1_USER:-}
+      - OPENVPN_PASS=${CLIENT1_PASS:-}
+      - HEALTH_CHECK_URL=${HEALTH_CHECK_URL:-http://ifconfig.me}
+      - SOCKS_PORT=1080
+      - TZ=${TZ:-UTC}
+
+    # -- Health Check ---------------------------------------------------------
+    # Verifies VPN tunnel is working by routing a request through the SOCKS5 proxy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "--socks5", "localhost:1080", "${HEALTH_CHECK_URL:-http://ifconfig.me}"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+    # -- Resource Limits ------------------------------------------------------
+    # Prevents a runaway VPN connection from consuming all host resources
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+    # -- Logging --------------------------------------------------------------
+    # Rotate logs to prevent disk space exhaustion
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # VPN Client 2 - Secondary connection
+  # ===========================================================================
+  # Routes traffic through Host port 1081 → Container SOCKS5 → VPN tunnel
+  #
+  # This demonstrates running multiple isolated VPN connections simultaneously.
+  # Each client uses a different .ovpn file and maps to a unique host port.
+  # ===========================================================================
+  oid-client-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oid-client-2
+    restart: unless-stopped
+
+    # Different host port (1081) to avoid conflicts with Client 1
+    ports:
+      - "1081:1080"
+
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+
+    # Mount a different .ovpn file for this VPN connection
+    volumes:
+      - ./configs/client2.ovpn:/etc/openvpn/client.ovpn:ro
+
+    environment:
+      - OPENVPN_USER=${CLIENT2_USER:-}
+      - OPENVPN_PASS=${CLIENT2_PASS:-}
+      - HEALTH_CHECK_URL=${HEALTH_CHECK_URL:-http://ifconfig.me}
+      - SOCKS_PORT=1080
+      - TZ=${TZ:-UTC}
+
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "--socks5", "localhost:1080", "${HEALTH_CHECK_URL:-http://ifconfig.me}"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # VPN Client 3 - Template for additional connections
+  # ===========================================================================
+  # Uncomment and configure to add more VPN clients.
+  # Remember to:
+  #   1. Create a new .ovpn file in ./configs/
+  #   2. Choose an unused host port
+  #   3. Add credentials to .env
+  # ===========================================================================
+  # oid-client-3:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: oid-client-3
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1082:1080"
+  #   cap_add:
+  #     - NET_ADMIN
+  #   devices:
+  #     - /dev/net/tun
+  #   volumes:
+  #     - ./configs/client3.ovpn:/etc/openvpn/client.ovpn:ro
+  #   environment:
+  #     - OPENVPN_USER=${CLIENT3_USER:-}
+  #     - OPENVPN_PASS=${CLIENT3_PASS:-}
+  #     - HEALTH_CHECK_URL=${HEALTH_CHECK_URL:-http://ifconfig.me}
+  #     - SOCKS_PORT=1080
+  #     - TZ=${TZ:-UTC}
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-sf", "--socks5", "localhost:1080", "http://ifconfig.me"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     start_period: 60s
+  #     retries: 3
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.5"
+  #         memory: 256M
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
