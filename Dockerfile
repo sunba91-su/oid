@@ -33,15 +33,14 @@ LABEL maintainer="sunba91" \
 # - bash:          Entrypoint scripting
 RUN apk add --no-cache openvpn iproute2 iptables curl bash
 
-# Copy microsocks binary from builder and create directories
+# Copy microsocks binary from builder and entrypoint script
 COPY --from=builder /tmp/microsocks/microsocks /usr/local/bin/microsocks
+COPY scripts/entrypoint.sh /entrypoint.sh
 
-# Create required directories, set permissions, and copy entrypoint
+# Create required directories and set permissions
 RUN mkdir -p /etc/openvpn /var/log/openvpn /var/run/openvpn /tmp/oid \
     && chmod +x /usr/local/bin/microsocks \
     && chmod +x /entrypoint.sh
-
-COPY scripts/entrypoint.sh /entrypoint.sh
 
 # Default environment variables
 # HEALTH_CHECK_URL: URL to verify VPN tunnel is working (checked via SOCKS5 proxy)
