@@ -51,22 +51,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up QEMU for multi-platform builds
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build Docker image (no push, for scanning)
+      # Build Docker image (single platform for CI, loaded locally for scanning)
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: false
-          load: false
+          load: true
           tags: ${{ env.IMAGE_NAME }}:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
