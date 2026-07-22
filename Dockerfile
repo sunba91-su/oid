@@ -8,11 +8,7 @@
 # ---------------------------------------------------------------------------
 FROM alpine:3.20 AS builder
 
-RUN apk add --no-cache \
-    git=2.45.2-r0 \
-    gcc=13.2.1_git20240309-r0 \
-    make=4.4.1-r2 \
-    musl-dev=1.2.5-r0
+RUN apk add --no-cache git gcc make musl-dev
 
 RUN git clone https://github.com/rofl0r/microsocks.git /tmp/microsocks
 
@@ -35,12 +31,7 @@ LABEL maintainer="sunba91" \
 # - iptables:      Firewall rules for routing
 # - curl:          Health checks
 # - bash:          Entrypoint scripting
-RUN apk add --no-cache \
-    openvpn=2.6.12-r0 \
-    iproute2=6.10.0-r0 \
-    iptables=1.8.10-r1 \
-    curl=8.11.1-r0 \
-    bash=5.2.37-r0
+RUN apk add --no-cache openvpn iproute2 iptables curl bash
 
 # Copy microsocks binary from builder and create directories
 COPY --from=builder /tmp/microsocks/microsocks /usr/local/bin/microsocks
