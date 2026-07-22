@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+RELEASE_NOTES.md
+LICENSE
+*.md
+
+# CI/CD
+.github/
+
+# Sensitive files
+.env
+.env.*
+configs/
+
+# OS files
+.DS_Store
+Thumbs.db

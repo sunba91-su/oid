@@ -1,0 +1,25 @@
+# OID - OpenVPN Isolated Docker
+# Sensitive OpenVPN configs (users mount these, never commit)
+configs/*.ovpn
+configs/*.conf
+
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
