@@ -3,8 +3,9 @@
 # =============================================================================
 # Triggers on version tags (v*) to:
 #   1. Build multi-platform Docker images (amd64, arm64)
-#   2. Push to GitHub Container Registry (GHCR)
-#   3. Create a GitHub Release with source archive
+#   2. Scan for vulnerabilities with Trivy
+#   3. Push to GitHub Container Registry (GHCR)
+#   4. Create a GitHub Release with source archive
 # =============================================================================
 
 name: Release
@@ -27,6 +28,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
 
     steps:
       # Checkout the repository
@@ -59,11 +61,46 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=sha,prefix=
 
-      # Build and push Docker image
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      # Build Docker image (without pushing, for scanning)
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
+          load: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=false
+
+      # Scan the built image for vulnerabilities with Trivy
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+        continue-on-error: true
+
+      # Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      # Push the scanned image to GHCR
+      - name: Push Docker image
+        id: push
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -71,11 +108,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       # Output image digest for reference
       - name: Output image digest
-        run: echo "Image digest ${{ steps.build-and-push.outputs.digest }}"
+        run: echo "Image digest ${{ steps.push.outputs.digest }}"
 
   # ---------------------------------------------------------------------------
   # Job 2: Create GitHub Release with source archive
@@ -99,25 +135,6 @@ jobs:
           files: |
             README.md
             RELEASE_NOTES.md
-          body: |
-            ## Docker Image
-
-            ```bash
-            docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-            ```
-
-            ## What's Changed
-
-            See [RELEASE_NOTES.md](RELEASE_NOTES.md) for full details.
-
-            ## Installation
-
-            ```bash
-            # Pull the image
-            docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-
-            # Or build locally
-            docker build -t oid:${{ github.ref_name }} .
-            ```
+            LICENSE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
