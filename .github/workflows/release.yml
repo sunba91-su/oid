@@ -2,10 +2,9 @@
 # OID - GitHub Actions Release Workflow
 # =============================================================================
 # Triggers on version tags (v*) to:
-#   1. Build multi-platform Docker images (amd64, arm64)
-#   2. Scan for vulnerabilities with Trivy
-#   3. Push to GitHub Container Registry (GHCR)
-#   4. Create a GitHub Release with source archive
+#   1. Build and scan single-platform image
+#   2. Build and push multi-platform image (amd64, arm64)
+#   3. Create a GitHub Release with release archive
 # =============================================================================
 
 name: Release
@@ -21,7 +20,7 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1: Build and push Docker image to GHCR
+  # Job 1: Build, scan, and push Docker image to GHCR
   # ---------------------------------------------------------------------------
   build-and-push:
     runs-on: ubuntu-latest
@@ -31,19 +30,15 @@ jobs:
       security-events: write
 
     steps:
-      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up QEMU for multi-platform builds (arm64 emulation on amd64)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # Set up Docker Buildx for advanced build features
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Login to GitHub Container Registry
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -51,7 +46,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Extract metadata (tags, labels) for the Docker image
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -64,26 +58,22 @@ jobs:
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=sha,prefix=
 
-      # Build Docker image (without pushing, for scanning)
-      - name: Build Docker image
-        id: build
+      # Build single-platform image locally for Trivy scanning
+      - name: Build image for scanning
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: false
-          load: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:scan
           cache-from: type=gha
-          cache-to: type=gha,mode=max
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=false
 
-      # Scan the built image for vulnerabilities with Trivy
+      # Scan the local image for vulnerabilities
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.24.0
         with:
-          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          image-ref: "${{ env.IMAGE_NAME }}:scan"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
@@ -96,8 +86,8 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-      # Push the scanned image to GHCR
-      - name: Push Docker image
+      # Build and push multi-platform image to GHCR
+      - name: Build and push multi-platform image
         id: push
         uses: docker/build-push-action@v6
         with:
@@ -107,13 +97,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # Output image digest for reference
       - name: Output image digest
         run: echo "Image digest ${{ steps.push.outputs.digest }}"
 
   # ---------------------------------------------------------------------------
-  # Job 2: Create GitHub Release with source archive
+  # Job 2: Create GitHub Release with release archive
   # ---------------------------------------------------------------------------
   create-release:
     needs: build-and-push
@@ -122,11 +112,9 @@ jobs:
       contents: write
 
     steps:
-      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Create GitHub Release with source code archive
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -135,6 +123,6 @@ jobs:
             README.md
             RELEASE_NOTES.md
             LICENSE
-            release-v1.0.0.tar.gz
+            release-v1.0.1.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
