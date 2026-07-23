@@ -143,34 +143,24 @@ EOF
 setup_routing() {
     log "Setting up VPN routing..."
 
-    # Get the VPN server gateway from the current default route
-    local default_gw
-    default_gw=$(ip route show default | awk '{print $3}')
-    local default_dev
-    default_dev=$(ip route show default | awk '{print $5}')
+    # Wait a moment for routes to settle
+    sleep 2
 
-    if [ -z "$default_gw" ] || [ -z "$default_dev" ]; then
-        log_error "Could not determine default gateway"
-        return 1
+    # Check if OpenVPN already added the split routes
+    if ip route show 0.0.0.0/1 dev tun0 &>/dev/null; then
+        log "Split routes already configured by OpenVPN."
+        return 0
     fi
 
-    # Get the tun0 gateway from OpenVPN's pushed routes
-    local tun_gw
-    tun_gw=$(ip route show dev tun0 | grep -v "proto kernel" | awk '{print $3}' | head -1)
+    # Add split routes via tun0 device directly (avoids gateway subnet issues)
+    # 0.0.0.0/1 and 128.0.0.0/1 are more specific than default route (0.0.0.0/0)
+    ip route add 0.0.0.0/1 dev tun0 2>/dev/null || true
+    ip route add 128.0.0.0/1 dev tun0 2>/dev/null || true
 
-    if [ -z "$tun_gw" ]; then
-        # Fallback: use the tun0 peer address
-        tun_gw=$(ip addr show tun0 | grep "inet " | awk '{print $4}' | sed 's|/.*||')
-    fi
-
-    # Add split routes: all traffic goes through tun0 except VPN server
-    # 0.0.0.0/1 and 128.0.0.0/0 are more specific than default route (0.0.0.0/0)
-    if [ -n "$tun_gw" ]; then
-        ip route add 0.0.0.0/1 dev tun0 2>/dev/null || true
-        ip route add 128.0.0.0/1 dev tun0 2>/dev/null || true
+    if ip route show 0.0.0.0/1 dev tun0 &>/dev/null; then
         log "Split routing configured: traffic routed through tun0 (VPN)"
     else
-        log_error "Could not determine tun0 gateway for routing"
+        log_error "Failed to add split routes through tun0"
         return 1
     fi
 
