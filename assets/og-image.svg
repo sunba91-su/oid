@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0f3460"/>
+      <stop offset="100%" style="stop-color:#533483"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="1100" cy="100" r="200" fill="#0f3460" opacity="0.3"/>
+  <circle cx="1150" cy="550" r="150" fill="#533483" opacity="0.2"/>
+
+  <!-- Left side: Title and tagline -->
+  <text x="80" y="180" font-family="Arial, sans-serif" font-size="96" font-weight="bold" fill="#ffffff">OID</text>
+  <text x="80" y="230" font-family="Arial, sans-serif" font-size="24" fill="#a0a0a0">OpenVPN Isolated Docker</text>
+
+  <!-- Tagline -->
+  <text x="80" y="300" font-family="Arial, sans-serif" font-size="28" fill="#ffffff">Run multiple isolated VPN connections</text>
+  <text x="80" y="340" font-family="Arial, sans-serif" font-size="28" fill="#ffffff">in Docker with SOCKS5 proxy</text>
+
+  <!-- Features -->
+  <text x="80" y="400" font-family="Arial, sans-serif" font-size="20" fill="#4ecca3">✓ Route isolation</text>
+  <text x="80" y="435" font-family="Arial, sans-serif" font-size="20" fill="#4ecca3">✓ SOCKS5 proxy</text>
+  <text x="80" y="470" font-family="Arial, sans-serif" font-size="20" fill="#4ecca3">✓ Auto-recovery</text>
+  <text x="80" y="505" font-family="Arial, sans-serif" font-size="20" fill="#4ecca3">✓ ~50MB image</text>
+
+  <!-- Right side: Architecture diagram -->
+  <!-- Docker container -->
+  <rect x="700" y="120" width="220" height="100" rx="10" fill="#0f3460" stroke="#4ecca3" stroke-width="2"/>
+  <text x="810" y="155" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Docker Container</text>
+  <text x="810" y="180" font-family="Arial, sans-serif" font-size="14" fill="#a0a0a0" text-anchor="middle">OpenVPN + microsocks</text>
+  <text x="810" y="200" font-family="Arial, sans-serif" font-size="14" fill="#4ecca3" text-anchor="middle">:1080 SOCKS5</text>
+
+  <!-- Arrow down -->
+  <line x1="810" y1="225" x2="810" y2="280" stroke="#4ecca3" stroke-width="2" marker-end="url(#arrow)"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4ecca3"/>
+    </marker>
+  </defs>
+
+  <!-- TUN interface -->
+  <rect x="740" y="285" width="140" height="50" rx="8" fill="#533483" stroke="#4ecca3" stroke-width="2"/>
+  <text x="810" y="315" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">tun0</text>
+
+  <!-- Arrow down -->
+  <line x1="810" y1="340" x2="810" y2="395" stroke="#4ecca3" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- VPN Server -->
+  <rect x="720" y="400" width="180" height="70" rx="10" fill="#0f3460" stroke="#e94560" stroke-width="2"/>
+  <text x="810" y="430" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">VPN Server</text>
+  <text x="810" y="455" font-family="Arial, sans-serif" font-size="14" fill="#e94560" text-anchor="middle">Encrypted Tunnel</text>
+
+  <!-- Browser arrow -->
+  <rect x="980" y="120" width="180" height="60" rx="8" fill="#1a1a2e" stroke="#a0a0a0" stroke-width="1"/>
+  <text x="1070" y="145" font-family="Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">Browser/App</text>
+  <text x="1070" y="165" font-family="Arial, sans-serif" font-size="12" fill="#a0a0a0" text-anchor="middle">socks5://localhost:1080</text>
+  <line x1="980" y1="150" x2="925" y2="150" stroke="#a0a0a0" stroke-width="1" marker-end="url(#arrow-gray)"/>
+  <defs>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#a0a0a0"/>
+    </marker>
+  </defs>
+
+  <!-- Bottom: URL -->
+  <rect x="0" y="580" width="1280" height="60" fill="#0f3460" opacity="0.5"/>
+  <text x="640" y="618" font-family="Arial, sans-serif" font-size="20" fill="#ffffff" text-anchor="middle">github.com/sunba91-su/oid</text>
+</svg>
