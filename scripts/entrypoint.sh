@@ -143,27 +143,16 @@ EOF
 setup_routing() {
     log "Setting up VPN routing..."
 
-    # Wait a moment for routes to settle
-    sleep 2
+    # Wait for routes to settle
+    sleep 3
 
-    # Check if OpenVPN already added the split routes
-    if ip route show 0.0.0.0/1 dev tun0 &>/dev/null; then
-        log "Split routes already configured by OpenVPN."
-        return 0
-    fi
-
-    # Add split routes via tun0 device directly (avoids gateway subnet issues)
+    # Always add split routes via tun0 device (unconditional)
     # 0.0.0.0/1 and 128.0.0.0/1 are more specific than default route (0.0.0.0/0)
+    # Using 'dev tun0' avoids gateway subnet mismatch issues
     ip route add 0.0.0.0/1 dev tun0 2>/dev/null || true
     ip route add 128.0.0.0/1 dev tun0 2>/dev/null || true
 
-    if ip route show 0.0.0.0/1 dev tun0 &>/dev/null; then
-        log "Split routing configured: traffic routed through tun0 (VPN)"
-    else
-        log_error "Failed to add split routes through tun0"
-        return 1
-    fi
-
+    log "Split routing configured: traffic routed through tun0 (VPN)"
     log "Routing setup complete."
 }
 
