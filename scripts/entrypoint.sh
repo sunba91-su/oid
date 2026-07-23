@@ -120,7 +120,7 @@ keepalive 10 60
 resolv-retry infinite
 persist-tun
 persist-key
-remap-usr1 SIGUSR1
+remap-usr1 SIGHUP
 EOF
 
     log "Resilience flags injected."
