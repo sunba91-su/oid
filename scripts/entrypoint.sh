@@ -139,6 +139,44 @@ EOF
     log "Resilience flags injected."
 }
 
+# -- Setup routing through VPN ------------------------------------------------
+setup_routing() {
+    log "Setting up VPN routing..."
+
+    # Get the VPN server gateway from the current default route
+    local default_gw
+    default_gw=$(ip route show default | awk '{print $3}')
+    local default_dev
+    default_dev=$(ip route show default | awk '{print $5}')
+
+    if [ -z "$default_gw" ] || [ -z "$default_dev" ]; then
+        log_error "Could not determine default gateway"
+        return 1
+    fi
+
+    # Get the tun0 gateway from OpenVPN's pushed routes
+    local tun_gw
+    tun_gw=$(ip route show dev tun0 | grep -v "proto kernel" | awk '{print $3}' | head -1)
+
+    if [ -z "$tun_gw" ]; then
+        # Fallback: use the tun0 peer address
+        tun_gw=$(ip addr show tun0 | grep "inet " | awk '{print $4}' | sed 's|/.*||')
+    fi
+
+    # Add split routes: all traffic goes through tun0 except VPN server
+    # 0.0.0.0/1 and 128.0.0.0/0 are more specific than default route (0.0.0.0/0)
+    if [ -n "$tun_gw" ]; then
+        ip route add 0.0.0.0/1 dev tun0 2>/dev/null || true
+        ip route add 128.0.0.0/1 dev tun0 2>/dev/null || true
+        log "Split routing configured: traffic routed through tun0 (VPN)"
+    else
+        log_error "Could not determine tun0 gateway for routing"
+        return 1
+    fi
+
+    log "Routing setup complete."
+}
+
 # -- Start microsocks --------------------------------------------------------
 start_socks_proxy() {
     log "Starting SOCKS5 proxy (microsocks) on port $SOCKS_PORT..."
@@ -191,6 +229,9 @@ main() {
     inject_resilience
     start_socks_proxy
     start_openvpn
+
+    # Set up routing so SOCKS5 traffic goes through VPN
+    setup_routing
 
     log "============================================="
     log "OID is running!"
