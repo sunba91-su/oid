@@ -1,21 +1,52 @@
-# OID - OpenVPN Isolated Docker
+# OID - OpenVPN Isolated Docker | Run Multiple VPN Connections in Docker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-24.0-blue?logo=docker)](https://www.docker.com/)
 [![OpenVPN](https://img.shields.io/badge/OpenVPN-2.6-green)](https://openvpn.net/)
 [![GitHub release](https://img.shields.io/github/v/release/sunba91/oid)](https://github.com/sunba91/oid/releases)
+[![GitHub stars](https://img.shields.io/github/stars/sunba91/oid)](https://github.com/sunba91/oid/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/sunba91/oid)](https://github.com/sunba91/oid/issues)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/sunba91/oid/ci.yml?branch=main)](https://github.com/sunba91/oid/actions)
+[![Docker Pulls](https://img.shields.io/badge/Pull%20from-GHCR-blue)](https://ghcr.io/sunba91/oid)
 
-> **Run multiple isolated OpenVPN connections in Docker containers with SOCKS5 proxy access - without polluting your host's routing table.**
+> **Docker VPN isolation tool: Run multiple OpenVPN connections simultaneously with SOCKS5 proxy access - without polluting your host's routing table.**
 
 ---
 
-## The Problem
+## What is OID?
 
-Need to route different applications through different VPN connections? Standard OpenVPN setups modify your host's routing table, making it impossible to run multiple VPN connections simultaneously without conflicts.
+**OID (OpenVPN Isolated Docker)** is a lightweight, containerized solution for running multiple isolated OpenVPN connections on a single Linux host. Instead of modifying your host's routing tables, OID exposes each VPN tunnel via a local **SOCKS5 proxy**, allowing unlimited concurrent VPN connections without conflicts.
 
-## The Solution
+OID is perfect for:
 
-**OID** runs each VPN connection inside an isolated Docker container. Instead of modifying host routes, the VPN tunnel is exposed locally via a **SOCKS5 proxy**. Each container gets its own network namespace, allowing unlimited concurrent VPN connections on different ports.
+- **Privacy-conscious users** who want per-application VPN routing
+- **Developers** needing isolated VPN connections for testing
+- **Security researchers** requiring multiple exit IPs
+- **Businesses** with region-specific access requirements
+- **Data engineers** needing IP rotation for batch processing
+
+### Key Features
+
+- **Zero host route pollution** - Your default gateway stays untouched
+- **Unlimited parallel connections** - Run as many VPN clients as you need
+- **Full isolation** - Each container has its own network namespace
+- **Simple integration** - Applications use standard SOCKS5 proxy settings
+- **Auto-recovery** - Built-in connection monitoring and restart
+- **Minimal footprint** - ~50MB Alpine Linux base image
+- **Secure** - Credentials in tmpfs, read-only mounts, minimal capabilities
+
+---
+
+## Why Use Docker for VPN Isolation?
+
+Traditional OpenVPN setups modify your host's routing table, making it impossible to run multiple VPN connections simultaneously. This causes:
+
+- **Route conflicts** - Multiple VPNs fight for the same routes
+- **Split tunneling issues** - Can't selectively route traffic
+- **Host pollution** - VPN routes affect all applications
+- **No isolation** - One VPN affects all traffic
+
+**OID solves this** by running each VPN in an isolated Docker container with its own network stack. Applications connect to a local SOCKS5 proxy, and traffic is automatically routed through the VPN tunnel.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -42,25 +73,9 @@ Need to route different applications through different VPN connections? Standard
                   VPN Server A   VPN Server B
 ```
 
-**Key Benefits:**
-- **Zero host route pollution** - Your default gateway stays untouched
-- **Unlimited parallel connections** - Run as many VPN clients as you need
-- **Full isolation** - Each container has its own network namespace
-- **Simple integration** - Applications use standard SOCKS5 proxy settings
-- **Auto-recovery** - Built-in connection monitoring and restart
-
 ---
 
-## Prerequisites
-
-- **Docker** 20.10+ with Docker Compose v2
-- **Linux host** (required for TUN device support)
-- **OpenVPN config files** (`.ovpn`) from your VPN provider
-- **Root/sudo access** (for Docker and TUN device)
-
----
-
-## Quick Start
+## Quick Start (30 Seconds)
 
 ### 1. Clone and configure
 
@@ -70,58 +85,123 @@ cd oid
 cp .env.example .env
 ```
 
-### 2. Add your VPN configs
+### 2. Add your VPN config
 
 ```bash
-# Place your .ovpn files in the configs directory
 cp /path/to/your-vpn.ovpn ./configs/client1.ovpn
-cp /path/to/another-vpn.ovpn ./configs/client2.ovpn
 ```
 
-### 3. Configure credentials (if needed)
-
-Edit `.env` with your VPN credentials:
-
-```env
-# For username/password authentication
-CLIENT1_USER=your_username
-CLIENT1_PASS=your_password
-
-# Leave empty for certificate-based auth (certs embedded in .ovpn)
-CLIENT2_USER=
-CLIENT2_PASS=
-```
-
-### 4. Start the VPN clients
+### 3. Start the VPN
 
 ```bash
 docker compose up -d
 ```
 
-### 5. Verify it works
+### 4. Verify it works
 
 ```bash
-# Check VPN tunnel is working
 curl --socks5 localhost:1080 https://ifconfig.me
-
 # Should show your VPN's exit IP, not your real IP
 ```
 
-### 6. Use the proxy
-
-Configure your application to use the SOCKS5 proxy:
+### 5. Use the proxy
 
 ```bash
 # Command line
 export ALL_PROXY=socks5h://localhost:1080
 curl https://ifconfig.me
 
-# Or per-command
-curl --socks5-hostname localhost:1080 https://example.com
-
 # Browser (Firefox)
 # Settings → Network Settings → Manual Proxy → SOCKS Host: localhost, Port: 1080
 ```
+
+---
+
+## Use Cases
+
+### Privacy & Anonymity
+
+Route browser traffic through VPN for privacy protection:
+
+```bash
+# Start VPN
+docker compose up -d oid-client-1
+
+# Configure browser proxy: socks5://localhost:1080
+# All browser traffic now goes through VPN
+```
+
+### Multi-Region Access
+
+Connect to multiple VPN servers for geo-restriction bypass:
+
+```bash
+# US VPN on port 1080, EU VPN on port 1081
+docker compose up -d
+
+# Access US content
+curl --socks5-hostname localhost:1080 https://us-content.example.com
+
+# Access EU content
+curl --socks5-hostname localhost:1081 https://eu-content.example.com
+```
+
+### Development & Testing
+
+Isolated VPN for secure development:
+
+```bash
+# Development VPN
+docker compose up -d oid-client-1
+
+# Test your app through VPN
+ALL_PROXY=socks5://localhost:1080 npm test
+```
+
+### Batch Processing
+
+Data processing with IP rotation:
+
+```bash
+# Start VPN
+docker compose up -d oid-client-1
+
+# Process data through VPN
+curl --socks5-hostname localhost:1080 https://api.example.com/data
+```
+
+### Microservices Routing
+
+Route specific services through different VPNs:
+
+```yaml
+services:
+  service-a:
+    environment:
+      - HTTP_PROXY=socks5://oid-client-1:1080
+    depends_on:
+      - oid-client-1
+
+  service-b:
+    environment:
+      - HTTP_PROXY=socks5://oid-client-2:1080
+    depends_on:
+      - oid-client-2
+```
+
+---
+
+## Comparison with Alternatives
+
+| Feature | OID | Standard OpenVPN | Other Docker VPN Tools |
+|---------|-----|------------------|------------------------|
+| Multiple VPNs | ✅ Unlimited | ❌ Single connection | ⚠️ Limited |
+| Host route isolation | ✅ Complete | ❌ Pollutes routes | ⚠️ Partial |
+| SOCKS5 proxy | ✅ Built-in | ❌ Manual setup | ⚠️ Varies |
+| Docker native | ✅ Full support | ❌ Not containerized | ⚠️ Partial |
+| Auto-recovery | ✅ Built-in | ⚠️ Manual config | ⚠️ Varies |
+| Minimal footprint | ✅ ~50MB | ❌ Full OS | ⚠️ Larger |
+| Credential security | ✅ tmpfs only | ⚠️ Config files | ⚠️ Varies |
 
 ---
 
@@ -133,7 +213,7 @@ curl --socks5-hostname localhost:1080 https://example.com
 |----------|----------|---------|-------------|
 | `OPENVPN_USER` | No | *(empty)* | VPN username. Leave empty for certificate-based auth. |
 | `OPENVPN_PASS` | No | *(empty)* | VPN password. Leave empty for certificate-based auth. |
-| `HEALTH_CHECK_URL` | No | `http://ifconfig.me` | URL to verify VPN tunnel health. Must be accessible through SOCKS5. |
+| `HEALTH_CHECK_URL` | No | `http://ifconfig.me` | URL to verify VPN tunnel health. |
 | `SOCKS_PORT` | No | `1080` | Internal SOCKS5 proxy port inside the container. |
 | `TZ` | No | `UTC` | Container timezone (e.g., `America/New_York`). |
 
@@ -158,7 +238,7 @@ curl --socks5-hostname localhost:1080 https://example.com
 
 ---
 
-## Running Multiple VPN Profiles
+## Running Multiple VPN Clients
 
 Each VPN client needs:
 1. A unique `.ovpn` file
@@ -168,23 +248,22 @@ Each VPN client needs:
 ### Example: 3 VPN Clients
 
 ```yaml
-# docker-compose.yml additions
 services:
   oid-client-1:
     ports:
-      - "1080:1080"    # Host port 1080
+      - "1080:1080"
     volumes:
       - ./configs/us-east.ovpn:/etc/openvpn/client.ovpn:ro
 
   oid-client-2:
     ports:
-      - "1081:1080"    # Host port 1081
+      - "1081:1080"
     volumes:
       - ./configs/eu-west.ovpn:/etc/openvpn/client.ovpn:ro
 
   oid-client-3:
     ports:
-      - "1082:1080"    # Host port 1082
+      - "1082:1080"
     volumes:
       - ./configs/ap-south.ovpn:/etc/openvpn/client.ovpn:ro
 ```
@@ -200,66 +279,6 @@ docker compose up -d oid-client-1 oid-client-2
 
 # Start all clients
 docker compose up -d
-```
-
----
-
-## Advanced Usage
-
-### Custom Health Check URL
-
-```bash
-# Check against a specific endpoint
-HEALTH_CHECK_URL=https://api.example.com/health docker compose up -d
-
-# Or set in .env
-HEALTH_CHECK_URL=https://api.example.com/health
-```
-
-### Timezone Configuration
-
-```bash
-# Set container timezone
-TZ=America/New_York docker compose up -d
-```
-
-### Viewing Logs
-
-```bash
-# Follow logs for a specific client
-docker compose logs -f oid-client-1
-
-# View last 100 lines
-docker compose logs --tail=100 oid-client-2
-
-# View OpenVPN specific logs
-docker compose exec oid-client-1 cat /var/log/openvpn/openvpn.log
-```
-
-### Manual Debugging
-
-```bash
-# Shell into a running container
-docker compose exec oid-client-1 bash
-
-# Check TUN interface
-ip link show tun0
-
-# Test SOCKS5 proxy from inside container
-curl --socks5 localhost:1080 https://ifconfig.me
-
-# Check OpenVPN status
-ps aux | grep openvpn
-```
-
-### Restarting a Client
-
-```bash
-# Restart a specific client
-docker compose restart oid-client-1
-
-# Rebuild and restart
-docker compose up -d --build oid-client-1
 ```
 
 ---
@@ -288,6 +307,53 @@ docker compose up -d --build oid-client-1
 - **Persistent keys**: Credentials survive reconnections (`persist-key`, `persist-tun`)
 - **Health monitoring**: Docker health checks verify tunnel is operational
 - **Graceful shutdown**: Proper signal handling for clean disconnects
+
+For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
+## Advanced Usage
+
+### Custom Health Check URL
+
+```bash
+HEALTH_CHECK_URL=https://api.example.com/health docker compose up -d
+```
+
+### Timezone Configuration
+
+```bash
+TZ=America/New_York docker compose up -d
+```
+
+### Viewing Logs
+
+```bash
+# Follow logs
+docker compose logs -f oid-client-1
+
+# View last 100 lines
+docker compose logs --tail=100 oid-client-2
+
+# View OpenVPN logs
+docker compose exec oid-client-1 cat /var/log/openvpn/openvpn.log
+```
+
+### Manual Debugging
+
+```bash
+# Shell into container
+docker compose exec oid-client-1 bash
+
+# Check TUN interface
+ip link show tun0
+
+# Test SOCKS5 proxy
+curl --socks5 localhost:1080 https://ifconfig.me
+
+# Check OpenVPN status
+ps aux | grep openvpn
+```
 
 ---
 
@@ -326,7 +392,7 @@ lsof -i :1080
 
 # Use a different host port
 ports:
-  - "1083:1080"  # Change 1083 to any available port
+  - "1083:1080"
 ```
 
 ### Container Won't Start
@@ -335,35 +401,54 @@ ports:
 # Check Docker daemon
 sudo systemctl status docker
 
-# Verify TUN device exists on host
+# Verify TUN device exists
 ls -la /dev/net/tun
 
-# Check if running as root/sudo
+# Check permissions
 docker compose up  # Needs sudo or docker group membership
 ```
+
+For more troubleshooting tips, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ---
 
 ## Security Considerations
 
-- **Read-only mounts**: `.ovpn` files are mounted read-only to prevent accidental modification
-- **No secrets in images**: Credentials are passed via environment variables at runtime
+- **Read-only mounts**: `.ovpn` files mounted read-only to prevent modification
+- **No secrets in images**: Credentials passed via environment variables only
 - **Network isolation**: Each container has its own network namespace
 - **Resource limits**: CPU and memory limits prevent runaway processes
-- **Log rotation**: Automatic log rotation prevents disk space exhaustion
-- **Non-root where possible**: Container processes run with minimal privileges
+- **Log rotation**: Automatic log rotation prevents disk exhaustion
+- **Minimal capabilities**: Only `NET_ADMIN` capability added
+
+For security policy and vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
+---
+
+## Examples
+
+See the [examples/](examples/) directory for real-world usage examples:
+
+- [Privacy Browser](examples/privacy-browser.sh) - Route browser traffic through VPN
+- [Multi-Region VPN](examples/multi-region.sh) - Multiple VPN connections for different regions
+- [Development Environment](examples/development.sh) - Isolated VPN for development
+- [Microservices Routing](examples/microservices.sh) - Route specific services through VPN
+- [Batch Processing](examples/batch-processing.sh) - VPN for data processing jobs
+
+---
+
+## Related Projects
+
+- [Docker](https://www.docker.com/) - Container platform
+- [OpenVPN](https://openvpn.net/) - VPN software
+- [microsocks](https://github.com/rofl0r/microsocks) - Lightweight SOCKS5 proxy
+- [Alpine Linux](https://alpinelinux.org/) - Minimal container base image
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -375,8 +460,6 @@ This project is licensed under the **MIT License with Attribution Clause** - see
 
 ---
 
-## Acknowledgments
+## Tags
 
-- [OpenVPN](https://openvpn.net/) - The VPN backbone
-- [microsocks](https://github.com/rofl0r/microsocks) - Lightweight SOCKS5 proxy
-- [Alpine Linux](https://alpinelinux.org/) - Minimal container base image
+`docker` `openvpn` `vpn` `socks5` `proxy` `container` `linux` `networking` `isolation` `devops` `docker-vpn` `openvpn-docker` `socks5-proxy` `vpn-container` `docker-proxy` `network-isolation` `vpn-isolation` `docker-compose` `alpine-linux`
