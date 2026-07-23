@@ -111,12 +111,12 @@ inject_resilience() {
     sed -i '/^persist-tun/d' "$WORK_CONFIG"
     sed -i '/^persist-key/d' "$WORK_CONFIG"
     sed -i '/^remap-usr1 /d' "$WORK_CONFIG"
+    sed -i '/^cipher /d' "$WORK_CONFIG"
 
     # Append resilience flags
     cat >> "$WORK_CONFIG" <<'EOF'
 
 # -- OID Resilience Flags (auto-injected) --
-keepalive 10 60
 resolv-retry infinite
 persist-tun
 persist-key
