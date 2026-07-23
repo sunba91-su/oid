@@ -111,7 +111,12 @@ inject_resilience() {
     sed -i '/^persist-tun/d' "$WORK_CONFIG"
     sed -i '/^persist-key/d' "$WORK_CONFIG"
     sed -i '/^remap-usr1 /d' "$WORK_CONFIG"
-    sed -i '/^cipher /d' "$WORK_CONFIG"
+    sed -i '/^data-ciphers/d' "$WORK_CONFIG"
+    sed -i '/^data-ciphers-fallback/d' "$WORK_CONFIG"
+
+    # Extract legacy cipher from config if present (e.g. cipher AES-256-CBC)
+    local legacy_cipher
+    legacy_cipher=$(grep -oP '(?<=^cipher )\S+' "$WORK_CONFIG" || true)
 
     # Append resilience flags
     cat >> "$WORK_CONFIG" <<'EOF'
@@ -122,6 +127,12 @@ persist-tun
 persist-key
 remap-usr1 SIGHUP
 EOF
+
+    # If config uses a legacy cipher, ensure OpenVPN 2.6+ can negotiate it
+    if [ -n "$legacy_cipher" ]; then
+        sed -i "/^remap-usr1/a data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305:${legacy_cipher}\ndata-ciphers-fallback ${legacy_cipher}" "$WORK_CONFIG"
+        log "Legacy cipher detected: $legacy_cipher - added data-ciphers for compatibility."
+    fi
 
     log "Resilience flags injected."
 }
