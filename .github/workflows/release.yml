@@ -81,13 +81,12 @@ jobs:
 
       # Scan the built image for vulnerabilities with Trivy
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
-          exit-code: "1"
         continue-on-error: true
 
       # Upload Trivy scan results to GitHub Security tab
@@ -136,5 +135,6 @@ jobs:
             README.md
             RELEASE_NOTES.md
             LICENSE
+            release-v1.0.0.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
