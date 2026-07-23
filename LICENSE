@@ -30,7 +30,7 @@ visible and prominent attribution to:
 
     - Author: sunba91
     - Project: OID (OpenVPN Isolated Docker)
-    - Source: https://github.com/sunba91/oid
+    - Source: https://github.com/sunba91-su/oid
 
 This attribution must be:
 
@@ -46,14 +46,14 @@ This attribution must be:
 Acceptable forms of attribution include, but are not limited to:
 
 - "Powered by OID (OpenVPN Isolated Docker) by sunba91"
-- "Based on OID by sunba91 (https://github.com/sunba91/oid)"
+- "Based on OID by sunba91 (https://github.com/sunba91-su/oid)"
 - "This software uses OID, created by sunba91"
 - A credits section listing the above information
 
 EXAMPLE ATTRIBUTMENT NOTATION:
 
     This product includes OID (OpenVPN Isolated Docker), an open-source
-    project by sunba91. Source: https://github.com/sunba91/oid
+    project by sunba91. Source: https://github.com/sunba91-su/oid
 
 =============================================================================
 

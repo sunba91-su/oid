@@ -1,6 +1,6 @@
 # OID - OpenVPN Isolated Docker
 # Sensitive OpenVPN configs (users mount these, never commit)
-configs/*.ovpn
+*.ovpn
 configs/*.conf
 
 # Environment files (contain secrets)
@@ -23,3 +23,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.sublime-*
+
+# Build assets
+*.tar.gz
+*.zip

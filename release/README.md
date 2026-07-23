@@ -143,11 +143,11 @@ ports:
 
 ## Documentation
 
-- [README](https://github.com/sunba91/oid#readme)
-- [Architecture](https://github.com/sunba91/oid/blob/main/docs/ARCHITECTURE.md)
-- [Troubleshooting](https://github.com/sunba91/oid/blob/main/docs/TROUBLESHOOTING.md)
-- [Examples](https://github.com/sunba91/oid/tree/main/examples)
+- [README](https://github.com/sunba91-su/oid#readme)
+- [Architecture](https://github.com/sunba91-su/oid/blob/main/docs/ARCHITECTURE.md)
+- [Troubleshooting](https://github.com/sunba91-su/oid/blob/main/docs/TROUBLESHOOTING.md)
+- [Examples](https://github.com/sunba91-su/oid/tree/main/examples)
 
 ## License
 
-MIT License with Attribution Clause - see [LICENSE](https://github.com/sunba91/oid/blob/main/LICENSE) for details.
+MIT License with Attribution Clause - see [LICENSE](https://github.com/sunba91-su/oid/blob/main/LICENSE) for details.

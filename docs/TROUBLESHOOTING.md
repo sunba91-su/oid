@@ -351,7 +351,7 @@ environment:
 
 If none of these solutions work:
 
-1. Check [GitHub Issues](https://github.com/sunba91/oid/issues)
+1. Check [GitHub Issues](https://github.com/sunba91-su/oid/issues)
 2. Search for similar problems
 3. Open a new issue with:
    - Container logs

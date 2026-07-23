@@ -23,7 +23,7 @@ FROM alpine:3.20
 LABEL maintainer="sunba91" \
       org.opencontainers.image.title="OID" \
       org.opencontainers.image.description="OpenVPN Isolated Docker - Run VPN connections in containers with SOCKS5 proxy" \
-      org.opencontainers.image.source="https://github.com/sunba91/oid"
+      org.opencontainers.image.source="https://github.com/sunba91-su/oid"
 
 # Install runtime dependencies
 # - openvpn:       VPN client

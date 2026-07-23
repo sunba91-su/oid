@@ -3,11 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-24.0-blue?logo=docker)](https://www.docker.com/)
 [![OpenVPN](https://img.shields.io/badge/OpenVPN-2.6-green)](https://openvpn.net/)
-[![GitHub release](https://img.shields.io/github/v/release/sunba91/oid)](https://github.com/sunba91/oid/releases)
-[![GitHub stars](https://img.shields.io/github/stars/sunba91/oid)](https://github.com/sunba91/oid/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/sunba91/oid)](https://github.com/sunba91/oid/issues)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/sunba91/oid/ci.yml?branch=main)](https://github.com/sunba91/oid/actions)
-[![Docker Pulls](https://img.shields.io/badge/Pull%20from-GHCR-blue)](https://ghcr.io/sunba91/oid)
+[![GitHub release](https://img.shields.io/github/v/release/sunba91-su/oid)](https://github.com/sunba91-su/oid/releases)
+[![GitHub stars](https://img.shields.io/github/stars/sunba91-su/oid)](https://github.com/sunba91-su/oid/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/sunba91-su/oid)](https://github.com/sunba91-su/oid/issues)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/sunba91-su/oid/ci.yml?branch=main)](https://github.com/sunba91-su/oid/actions)
+[![Docker Pulls](https://img.shields.io/badge/Pull%20from-GHCR-blue)](https://ghcr.io/sunba91-su/oid)
 
 > **Docker VPN isolation tool: Run multiple OpenVPN connections simultaneously with SOCKS5 proxy access - without polluting your host's routing table.**
 
@@ -80,7 +80,7 @@ Traditional OpenVPN setups modify your host's routing table, making it impossibl
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/sunba91/oid.git
+git clone https://github.com/sunba91-su/oid.git
 cd oid
 cp .env.example .env
 ```
