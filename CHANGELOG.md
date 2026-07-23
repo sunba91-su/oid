@@ -5,6 +5,18 @@ All notable changes to OID (OpenVPN Isolated Docker) will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-07-23
+
+### Fixed
+
+- OpenVPN 2.6+ cipher compatibility: auto-detect legacy ciphers and inject `data-ciphers`/`data-ciphers-fallback`
+- Split routing: add `0.0.0.0/1` and `128.0.0.0/1` via tun0 when server doesn't push `redirect-gateway`
+- `remap-usr1` option: changed from invalid `SIGUSR1` to valid `SIGHUP`
+- Removed deprecated `keepalive` directive that caused server rejection
+- Default docker-compose.yml starts single VPN client (oid-client-2 commented out)
+- Fixed CI/CD Trivy action version and SARIF upload
+- Fixed repository URL references (sunba91/oid → sunba91-su/oid)
+
 ## [1.0.0] - 2025-01-XX
 
 ### Added

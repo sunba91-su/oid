@@ -93,6 +93,30 @@ This is the initial release - no migration needed.
 
 ---
 
+## [1.0.1] - 2025-07-23
+
+### Fixed
+
+#### OpenVPN Compatibility
+- **Cipher negotiation**: Auto-detects legacy ciphers (e.g., `AES-256-CBC`) in .ovpn files and injects `data-ciphers` + `data-ciphers-fallback` for OpenVPN 2.6+ compatibility
+- **remap-usr1**: Fixed invalid `SIGUSR1` to valid `SIGHUP` signal
+- **Resilience flags**: Removed `keepalive` directive that caused server-side rejection
+
+#### Routing
+- **Split routing**: Adds `0.0.0.0/1` and `128.0.0.0/1` routes via tun0 when VPN server doesn't push `redirect-gateway`
+- Ensures all SOCKS5 proxy traffic routes through the VPN tunnel
+
+#### Configuration
+- **Single client default**: docker-compose.yml starts one VPN client by default (oid-client-2 commented out)
+- Added release package with pre-built GHCR images for easy deployment
+
+#### CI/CD
+- Fixed Trivy action version for Node 20 compatibility
+- Fixed SARIF upload in CI workflow
+- Fixed repository URL references
+
+---
+
 ## [Unreleased]
 
 ### Planned Features
